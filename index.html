@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloud Function API 測試</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      .card {
+        border: 1px solid #ccc;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        margin-top: 0;
+      }
+      input {
+        padding: 8px;
+        margin: 5px 0;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      pre {
+        background: #f4f4f4;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+      .response-area {
+        margin-top: 15px;
+        border-top: 1px dashed #ccc;
+        padding-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>前後端整合測試</h1>
+
+    <div class="card">
+      <h2>1. 註冊使用者 (/register)</h2>
+      <input type="email" id="reg-email" placeholder="輸入 Email" />
+      <input type="password" id="reg-password" placeholder="輸入密碼" />
+      <button onclick="handleRegister()">註冊</button>
+
+      <div class="response-area">
+        <strong>伺服器回應：</strong>
+        <pre id="reg-result">等待操作...</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2. 查詢密碼 Hash (/get-user)</h2>
+      <p>輸入已註冊的 Email，查看資料庫存了什麼樣的密碼結構。</p>
+      <input type="email" id="search-email" placeholder="輸入要查詢的 Email" />
+      <button onclick="handleGetUser()">查詢</button>
+
+      <div class="response-area">
+        <strong>伺服器回應：</strong>
+        <pre id="search-result">等待操作...</pre>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE_URL =
+        "https://school-api-598245268617.europe-west1.run.app";
+
+      async function handleRegister() {
+        const email = document.getElementById("reg-email").value;
+        const password = document.getElementById("reg-password").value;
+        const resultBox = document.getElementById("reg-result");
+
+        if (!email || !password) {
+          alert("請填寫完整資訊");
+          return;
+        }
+
+        resultBox.innerText = "傳送中...";
+
+        try {
+          // 使用 fetch 發送 POST 請求
+          const response = await fetch(`${API_BASE_URL}/register`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = await response.json();
+
+          // 顯示結果
+          if (response.ok) {
+            resultBox.style.color = "green";
+            resultBox.innerText = JSON.stringify(data, null, 2);
+          } else {
+            resultBox.style.color = "red";
+            resultBox.innerText = `錯誤 (${response.status}): ${data.error}`;
+          }
+        } catch (error) {
+          resultBox.style.color = "red";
+          resultBox.innerText = "連線失敗: " + error.message;
+        }
+      }
+
+      async function handleGetUser() {
+        const email = document.getElementById("search-email").value;
+        const resultBox = document.getElementById("search-result");
+
+        if (!email) {
+          alert("請輸入 Email");
+          return;
+        }
+
+        resultBox.innerText = "查詢中...";
+
+        try {
+          // 使用 fetch 發送 GET 請求 (參數帶在網址上)
+          const response = await fetch(
+            `${API_BASE_URL}/get-user?email=${email}`
+          );
+          const data = await response.json();
+
+          if (response.ok) {
+            resultBox.style.color = "green";
+            // 這裡可以看到 password_hash
+            resultBox.innerText = JSON.stringify(data, null, 2);
+          } else {
+            resultBox.style.color = "red";
+            resultBox.innerText = `錯誤 (${response.status}): ${data.error}`;
+          }
+        } catch (error) {
+          resultBox.style.color = "red";
+          resultBox.innerText = "連線失敗: " + error.message;
+        }
+      }
+    </script>
+  </body>
+</html>
